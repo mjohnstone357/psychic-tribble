@@ -1,13 +1,17 @@
 package dump
 
-import metadata.DatabaseTable
+import metadata.{DataType, ColumnType, Column, DatabaseTable}
+import scala.collection.mutable
 
 
-class Parsers {
+object Parsers {
 
   val AllParsers = List(
     new CommentParser(),
-    new BlankLineParser()
+    new BlankLineParser(),
+    new DropTableParser(),
+    new CreateTableParser(),
+    new UniversalParser()
   )
 
 }
@@ -45,6 +49,21 @@ sealed case class NothingOfInterest() extends ParseResultValue
  * The parser parsed some information about a table.
  */
 sealed case class ParsedATable(table: DatabaseTable) extends ParseResultValue
+
+class UniversalParser extends Parser {
+  override def tryParse(linesIterator: Iterator[String]): ParseStatusResult = {
+    val line: String = linesIterator.next()
+    println("Warning: skipped line: " + firstFewChars(line) + "...")
+    ParsedSuccessfully(NothingOfInterest())
+  }
+
+
+  def firstFewChars(s: String): String = {
+    s.substring(0, Math.min(s.length, 50))
+  }
+}
+
+
 
 class CommentParser extends Parser {
   override def tryParse(linesIterator: Iterator[String]): ParseStatusResult = {
@@ -86,22 +105,43 @@ class DropTableParser extends Parser {
 }
 
 class CreateTableParser extends Parser {
+
   override def tryParse(linesIterator: Iterator[String]): ParseStatusResult = {
     val firstLine: String = linesIterator.next()
 
     if (firstLine.startsWith("CREATE TABLE")) {
-      var currentLine = firstLine
+
+      val tableName: String = parseTableName(firstLine)
+
+      val columnLines = mutable.MutableList[String]()
+
+      var currentLine = linesIterator.next()
       while (!currentLine.contains(';')) {
+
+        val noWhitespace: String = currentLine.replace(" ", "")
+        if (!currentLine.startsWith(")") && !noWhitespace.startsWith("PRIMARYKEY") && !noWhitespace.startsWith("KEY")) {
+          columnLines += currentLine
+        }
+
         currentLine = linesIterator.next()
       }
-      ParsedSuccessfully(NothingOfInterest())
+
+      val columns: List[Column] = (for (columnLine <- columnLines) yield makeColumn(columnLine)).toList
+
+
+      ParsedSuccessfully(ParsedATable(DatabaseTable(tableName, columns)))
     } else {
       NoParse(List(firstLine))
     }
-
-
-
-
-
   }
+  def parseTableName(createTableLine: String): String = createTableLine.split("`")(1)
+
+  def makeColumn(columnLine: String) = {
+    val words: Array[String] = columnLine.split(" ")
+    val typeWord: String = words(3)
+    val typeAndWidth: Array[String] = typeWord.split("\\(")
+    Column(name = columnLine.split("`")(1), ColumnType(parseDataType(typeAndWidth(0)), typeAndWidth(1).split("\\)")(0).toInt))
+  }
+
+  def parseDataType(typeName: String): DataType = DataType.parse(typeName)
 }

@@ -2,7 +2,11 @@ package dump
 
 import org.scalatest.{Matchers, FlatSpec}
 import scala.io.Source
-import metadata.{Integer, ColumnType, Column, DatabaseTable}
+import metadata._
+import metadata.ColumnType
+import metadata.Integer
+import metadata.Column
+import metadata.DatabaseTable
 
 
 class ParserTests extends FlatSpec with Matchers {
@@ -37,18 +41,25 @@ class ParserTests extends FlatSpec with Matchers {
   PRIMARY KEY (`rd_from`),
   KEY `rd_ns_title` (`rd_namespace`,`rd_title`,`rd_from`)
 ) ENGINE=InnoDB DEFAULT CHARSET=binary;"""
+
     val lines: Iterator[String] = Source.fromString(inputText + "\n").getLines()
 
     val result: ParseStatusResult = new CreateTableParser().tryParse(lines)
 
-    result should be (ParsedATable(
-      DatabaseTable(
-        name = "redirect",
-        columns = List(
-          Column("rd_from", ColumnType(Integer(), 8))
-        )
-      )
-    ))
+    result should be (
+      ParsedSuccessfully(
+        ParsedATable(
+          DatabaseTable(
+            name = "redirect",
+            columns = List(
+              Column("rd_from", ColumnType(Integer(), 8)),
+              Column("rd_namespace", ColumnType(Integer(), 11)),
+              Column("rd_title", ColumnType(VarBinary(), 255)),
+              Column("rd_interwiki", ColumnType(VarBinary(), 32)),
+              Column("rd_fragment", ColumnType(VarBinary(), 255))
+            )
+          )
+    )))
 
     lines.hasNext should be (false)
   }

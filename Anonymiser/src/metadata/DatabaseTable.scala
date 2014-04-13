@@ -16,7 +16,16 @@ sealed case class ColumnType(
   width: Int
 )
 
+object DataType {
+  def parse(typeName: String): DataType =
+    typeName match {
+      case "int" => Integer()
+      case "varbinary" => VarBinary()
+    }
+
+}
+
 abstract class DataType()
 
 sealed case class Integer() extends DataType
-sealed case class VarChar() extends DataType
+sealed case class VarBinary() extends DataType
