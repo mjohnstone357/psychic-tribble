@@ -68,6 +68,14 @@ class ParserTests extends FlatSpec with Matchers {
     applyParser(new CreateTableParser(), "blarg") should be (NoParse(List("blarg")))
   }
 
+  "The INSERT INTO parser" should "parse a multi-line INSERT INTO statement" in {
+    applyParser(new InsertIntoParser(), "INSERT INTO `redirect` VALUES (1,2,3),(4,5,6),(7,8,9)") should be (ParsedSuccessfully(NothingOfInterest()))
+  }
+
+  it should "not parse a li ne not starting with 'INSERT INTO'" in {
+    applyParser(new InsertIntoParser(), "blarg") should be (NoParse(List("blarg")))
+  }
+
 
   def applyParser(parser: Parser, text: String): ParseStatusResult = {
     val lines: Iterator[String] = Source.fromString(text + "\n").getLines()

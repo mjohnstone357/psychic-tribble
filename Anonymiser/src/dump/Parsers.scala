@@ -159,3 +159,20 @@ class CreateTableParser extends Parser {
 
   def parseDataType(typeName: String): DataType = DataType.parse(typeName)
 }
+
+class InsertIntoParser extends Parser {
+  override def tryParse(linesIterator: Iterator[String]): ParseStatusResult = {
+
+    val firstLine = linesIterator.next()
+
+    if (firstLine.startsWith("INSERT INTO")) {
+      val openParen: Int = firstLine.indexOf('(')
+      val tuplesText = firstLine.substring(openParen)
+//      val tuples = tuplesText.
+      ???
+    } else {
+      NoParse(List(firstLine))
+    }
+
+  }
+}
