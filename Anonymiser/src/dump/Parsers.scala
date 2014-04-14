@@ -50,6 +50,9 @@ sealed case class NothingOfInterest() extends ParseResultValue
  */
 sealed case class ParsedATable(table: DatabaseTable) extends ParseResultValue
 
+/**
+ * A parser which matches everything, but prints a warning message to stdout indicating that the line has been skipped.
+ */
 class UniversalParser extends Parser {
   override def tryParse(linesIterator: Iterator[String]): ParseStatusResult = {
     val line: String = linesIterator.next()
@@ -64,7 +67,9 @@ class UniversalParser extends Parser {
 }
 
 
-
+/**
+ * A parser which parses single-line comments.
+ */
 class CommentParser extends Parser {
   override def tryParse(linesIterator: Iterator[String]): ParseStatusResult = {
 
@@ -79,6 +84,9 @@ class CommentParser extends Parser {
   }
 }
 
+/**
+ * A parser which parses lines of length zero.
+ */
 class BlankLineParser extends Parser {
   override def tryParse(linesIterator: Iterator[String]): ParseStatusResult = {
 
@@ -93,6 +101,9 @@ class BlankLineParser extends Parser {
   }
 }
 
+/**
+ * A parser which parses single-line DROP TABLE statements but returns nothing of interest.
+ */
 class DropTableParser extends Parser {
   override def tryParse(linesIterator: Iterator[String]): ParseStatusResult = {
     val firstLine: String = linesIterator.next()
@@ -104,6 +115,9 @@ class DropTableParser extends Parser {
   }
 }
 
+/**
+ * A parser which parses a multi-line CREATE TABLE statement, and returns information about the table.
+ */
 class CreateTableParser extends Parser {
 
   override def tryParse(linesIterator: Iterator[String]): ParseStatusResult = {
